@@ -1069,6 +1069,8 @@ def _collect_rust_messages(window, base_path, info, target_path,
                 not _is_external(window, span['file_name']) and \
                 not span['expansion']['macro_decl_name'].startswith('#['):
             invoke_span, expansion = find_span_r(span)
+            # TODO: rustc now emits this in its text output in some cases.
+            # Consider trying to avoid the duplicate note.
             add_additional(window, invoke_span, 'in this macro invocation', 'help')
 
         if span['is_primary']:
