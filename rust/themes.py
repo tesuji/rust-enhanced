@@ -342,7 +342,6 @@ THEMES = {
 }
 
 def see_also(path):
-    print(path)
     if path.endswith(':external'):
         return 'See Also (external):'
     else:

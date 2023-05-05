@@ -2,6 +2,7 @@
 macro_rules! example_bad_syntax {
     () => {
         enum E {
+//           ^ERR(>=1.71.0-beta) while parsing this enum
             // This is somewhat of an odd example, since rustc gives two
             // syntax errors.
             Kind(x: u32)
@@ -12,6 +13,7 @@ macro_rules! example_bad_syntax {
 //                ^ERR(<1.34.0-beta) /expected one of .*, found `:`/
 //                ^ERR(>=1.18.0,<1.34.0-beta) expected one of
 //                ^MSG(>=1.20.0,<1.34.0-beta) See Also: macro-expansion-inside-1.rs:6
+//                ^HELP(>=1.71.0-beta) enum variants can be
         }
     }
 }
