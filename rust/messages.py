@@ -118,10 +118,10 @@ class Message:
             # Sometimes Sublime responds with a negative number, guard
             # against that.
             if width < 0:
-                return self.text
-
-            text = textwrap.fill(self.text, width=width,
-                break_long_words=False, break_on_hyphens=False)
+                text = self.text
+            else:
+                text = textwrap.fill(self.text, width=width,
+                    break_long_words=False, break_on_hyphens=False)
 
         def escape_and_link(i_txt):
             i, txt = i_txt
