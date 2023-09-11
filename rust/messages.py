@@ -1065,9 +1065,13 @@ def _collect_rust_messages(window, base_path, info, target_path,
 
         # Add a message for macro invocation site if available in the local
         # crate.
+        #
+        # `macro_decl_name` can be a variety of things, like fn-like macro,
+        # attribute, derive, "desugaring of", etc. We can generally only
+        # handle macro_rules macros.
         if span['expansion'] and \
                 not _is_external(window, span['file_name']) and \
-                not span['expansion']['macro_decl_name'].startswith('#['):
+                span['expansion']['macro_decl_name'].endswith('!'):
             invoke_span, expansion = find_span_r(span)
             # TODO: rustc now emits this in its text output in some cases.
             # Consider trying to avoid the duplicate note.
