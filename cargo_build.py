@@ -243,7 +243,10 @@ class MessagesViewEventListener(sublime_plugin.ViewEventListener):
 class NextPrevBase(sublime_plugin.WindowCommand):
 
     def _has_inline(self):
-        return self.window.id() in messages.WINDOW_MESSAGES
+        try:
+            return messages.WINDOW_MESSAGES[self.window.id()]['has_inline']
+        except KeyError:
+            return False
 
 
 class RustNextMessageCommand(NextPrevBase):
@@ -519,6 +522,22 @@ class RustMessageStatus(sublime_plugin.ViewEventListener):
         else:
             view = self.view
         messages.update_status(view)
+
+
+class RustShowBuildOutput(sublime_plugin.WindowCommand):
+
+    """Opens a view with the rustc-rendered compiler output."""
+
+    def run(self):
+        view = self.window.new_file()
+        view.set_scratch(True)
+        view.set_name('Rust Enhanced Build Output')
+        view.assign_syntax('Cargo.sublime-syntax')
+        win_info = messages.get_or_init_window_info(self.window)
+        output = win_info['rendered']
+        if output == '':
+            output = "No output available for this window."
+        view.run_command('append', {'characters': output})
 
 
 class RustEventListener(sublime_plugin.EventListener):

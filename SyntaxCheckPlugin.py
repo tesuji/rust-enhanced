@@ -67,6 +67,7 @@ class RustSyntaxCheckThread(rust_thread.RustThread, rust_proc.ProcListener):
     def __init__(self, view):
         self.view = view
         self.window = view.window()
+        self.rendered = []
         super(RustSyntaxCheckThread, self).__init__(view.window())
 
     def run(self):
@@ -190,23 +191,37 @@ class RustSyntaxCheckThread(rust_thread.RustThread, rust_proc.ProcListener):
     #########################################################################
 
     def on_begin(self, proc):
-        pass
+        self.rendered.append('[Running: %s]' % (' '.join(proc.cmd),))
 
     def on_data(self, proc, data):
         log.log(self.window, data)
+        self.rendered.append(data)
 
     def on_error(self, proc, message):
         log.critical(self.window, 'Rust Error: %s', message)
+        self.rendered.append(message)
 
     def on_json(self, proc, obj):
-        messages.add_rust_messages(self.window, self.msg_rel_path, obj,
+        try:
+            message = obj['message']
+        except KeyError:
+            return
+        messages.add_rust_messages(self.window, self.msg_rel_path, message,
                                    self.current_target_src, msg_cb=None)
         if messages.has_message_for_path(self.window,
                                          self.triggered_file_name):
             self.this_view_found = True
+        try:
+            self.rendered.append(message['rendered'])
+        except KeyError:
+            pass
 
     def on_finished(self, proc, rc):
         log.log(self.window, 'On-save check finished.')
+        # TODO: Also put message in self.rendered about [Finished in …]
+        # TODO: Figure out how to share all this code between here and opanel
+        win_info = messages.get_or_init_window_info(self.window)
+        win_info['rendered'] = ''.join(self.rendered)
 
     def on_terminated(self, proc):
         log.log(self.window, 'Process Interrupted')

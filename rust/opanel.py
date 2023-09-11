@@ -71,6 +71,7 @@ class OutputListener(rust_proc.ProcListener):
         self.base_path = base_path
         self.command_name = command_name
         self.rustc_version = rustc_version
+        self.rendered = []
 
     def on_begin(self, proc):
         self.output_view = create_output_panel(self.window, self.base_path)
@@ -114,9 +115,16 @@ class OutputListener(rust_proc.ProcListener):
         self._append(message)
 
     def on_json(self, proc, obj):
-        if 'message' in obj:
-            messages.add_rust_messages(self.window, self.base_path, obj['message'],
-                                       None, self.msg_cb)
+        try:
+            message = obj['message']
+        except KeyError:
+            return
+        messages.add_rust_messages(self.window, self.base_path, message,
+                                   None, self.msg_cb)
+        try:
+            self.rendered.append(message['rendered'])
+        except KeyError:
+            pass
 
     def msg_cb(self, message):
         """Display the message in the output panel.  Also marks the message
@@ -155,6 +163,8 @@ class OutputListener(rust_proc.ProcListener):
         # Tell Sublime to find all of the lines with pattern from
         # result_file_regex.
         self.output_view.find_all_results()
+        win_info = messages.get_or_init_window_info(self.window)
+        win_info['rendered'] = ''.join(self.rendered)
 
     def on_terminated(self, proc):
         self._append('[Build interrupted]')
@@ -163,6 +173,7 @@ class OutputListener(rust_proc.ProcListener):
         if nl:
             message += '\n'
         _append(self.output_view, message)
+        self.rendered.append(message)
 
     def _display_debug(self, proc):
         # Display some information to help the user debug any build problems.
