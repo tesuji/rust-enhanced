@@ -21,11 +21,15 @@ from .levels import *
 # Value is a dictionary: {
 #     'paths': {path: [MessageBatch, ...]},
 #     'batch_index': (path_idx, message_idx),
-#     'hidden': bool
+#     'hidden': bool,
+#     'rendered': string,
+#     'has_inline': False,
 # }
 # `paths` is an OrderedDict to handle next/prev message.
 # `path` is the absolute path to the file.
 # `hidden` indicates that all messages have been dismissed.
+# `rendered` is the rustc-rendered output
+# 'has_inline' is a boolean indicating if inline messages were added
 WINDOW_MESSAGES = {}
 
 
@@ -302,9 +306,8 @@ def _draw_region_highlights(view, batch):
 
 def batches_at_point(view, point, hover_zone):
     """Return a list of message batches at the given point."""
-    try:
-        winfo = WINDOW_MESSAGES[view.window().id()]
-    except KeyError:
+    winfo = get_window_info_for_view(view)
+    if winfo is None:
         return
     if winfo['hidden']:
         return
@@ -615,9 +618,8 @@ def redraw_all_open_views(window):
 
 def show_messages_for_view(view):
     """Adds all phantoms and region outlines for a view."""
-    try:
-        winfo = WINDOW_MESSAGES[view.window().id()]
-    except KeyError:
+    winfo = get_window_info_for_view(view)
+    if winfo is None:
         return
     if winfo['hidden']:
         return
@@ -628,9 +630,8 @@ def show_messages_for_view(view):
 
 
 def draw_regions_if_missing(view):
-    try:
-        winfo = WINDOW_MESSAGES[view.window().id()]
-    except KeyError:
+    winfo = get_window_info_for_view(view)
+    if winfo is None:
         return
     if winfo['hidden']:
         return
@@ -1184,16 +1185,9 @@ def _save_batches(window, batches, msg_cb):
     - Displays phantoms if a view is already open.
     - Calls `msg_cb` for each individual message.
     """
-    wid = window.id()
-    try:
-        path_to_batches = WINDOW_MESSAGES[wid]['paths']
-    except KeyError:
-        path_to_batches = collections.OrderedDict()
-        WINDOW_MESSAGES[wid] = {
-            'paths': path_to_batches,
-            'batch_index': (-1, -1),
-            'hidden': False,
-        }
+    win_info = get_or_init_window_info(window)
+    win_info['has_inline'] = True
+    path_to_batches = win_info['paths']
 
     for batch in batches:
         path_batches = path_to_batches.setdefault(batch.path(), [])
@@ -1202,7 +1196,7 @@ def _save_batches(window, batches, msg_cb):
         path_batches.append(batch)
         for i, msg in enumerate(batch):
             msg.region_key = 'rust-%i' % (num + i,)
-        if not WINDOW_MESSAGES[wid]['hidden']:
+        if not win_info['hidden']:
             views = util.open_views_for_file(window, batch.path())
             if views:
                 # Phantoms seem to be attached to the buffer.
@@ -1212,3 +1206,32 @@ def _save_batches(window, batches, msg_cb):
             if msg_cb:
                 for msg in batch:
                     msg_cb(msg)
+
+
+def get_or_init_window_info(window):
+    """Returns the window info for the given window, creating it if it hasn't been set."""
+    wid = window.id()
+    try:
+        return WINDOW_MESSAGES[wid]
+    except KeyError:
+        win_info = {
+            'paths': collections.OrderedDict(),
+            'batch_index': (-1, -1),
+            'hidden': False,
+            'rendered': '',
+            'has_inline': False,
+        }
+        WINDOW_MESSAGES[wid] = win_info
+        return win_info
+
+
+def get_window_info_for_view(view):
+    """Returns the window info for the given view, or None if not available."""
+    window = view.window()
+    if window is None:
+        # I'm not entire sure why this happens sometimes.
+        return None
+    try:
+        return WINDOW_MESSAGES[window.id()]
+    except KeyError:
+        return None

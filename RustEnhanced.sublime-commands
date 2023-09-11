@@ -57,6 +57,10 @@
         "command": "rust_open_log"
     },
     {
+        "caption": "Rust: Open Last Build Output As View",
+        "command": "rust_show_build_output"
+    },
+    {
         "caption": "Rust: Popup Message At Cursor",
         "command": "rust_message_popup"
     }
