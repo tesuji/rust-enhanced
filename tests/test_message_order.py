@@ -106,6 +106,19 @@ class TestMessageOrder(TestBase):
 
         to_close = []
 
+        # Helper to check when the view is updated to the correct location.
+        def check_view_has_updated(window, expected_filename, expected_row_col):
+            view = window.active_view()
+            view_filename = os.path.normpath(view.file_name())
+            if view_filename != expected_filename:
+                return False
+            region = view.sel()[0]
+            rowcol = view.rowcol(region.begin())
+            if expected_row_col[1] is None:
+                return rowcol[0] == expected_row_col[0]
+            else:
+                return rowcol == expected_row_col
+
         def check_sequence(direction):
             omsgs = messages if direction == 'next' else reversed(messages)
             levels = ('all', 'error', 'warning') if inline else ('all',)
@@ -124,22 +137,27 @@ class TestMessageOrder(TestBase):
                         window.run_command('rust_' + direction + '_message',
                             {'levels': level})
                         # Sublime doesn't always immediately move the active
-                        # view when 'next_result' is called, so give it a
-                        # moment to update.
-                        time.sleep(0.1)
-                        next_view = window.active_view()
-                        to_close.append(next_view)
-                        self.assertEqual(os.path.normpath(next_view.file_name()),
-                                         os.path.normpath(next_filename))
-                        region = next_view.sel()[0]
-                        rowcol = next_view.rowcol(region.begin())
+                        # view when 'next_result' is called, so loop until
+                        # it looks like it has updated to the correct location.
+                        expected_filename = os.path.normpath(next_filename)
                         if inline:
-                            self.assertEqual(rowcol, next_row_col)
+                            expected_row_col = next_row_col
                         else:
                             # When inline is disabled, we use Sublime's
                             # built-in next/prev, which goes to the beginning.
                             # Just validate the row is correct.
-                            self.assertEqual(rowcol[0], next_row_col[0])
+                            expected_row_col = (next_row_col[0], None)
+                        for _ in range(30):
+                            if check_view_has_updated(window, expected_filename, expected_row_col):
+                                break
+                            time.sleep(0.1)
+                        else:
+                            view = window.active_view()
+                            raise AssertionError('view did not update to %r at %r as expected\ncurrent view is %r at %r' % (
+                                expected_filename, expected_row_col,
+                                view.file_name(), view.rowcol(view.sel()[0].begin()))
+                            )
+                        to_close.append(window.active_view())
                         # Verify the output panel is highlighting the correct
                         # thing.
                         build_panel = window.find_output_panel(

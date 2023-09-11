@@ -11,6 +11,15 @@ from . import rust_proc, messages, util, semver, levels, log
 # this would be a problem.  If it is, it's a simple matter of changing this.
 PANEL_NAME = 'exec'
 
+# Pattern used for finding location of panics in test output.
+#
+# Rust 1.73 changed the formatting of a panic message.
+# Older versions looked like:
+#   thread 'basic_error1' panicked at 'assertion failed: false', tests/test_test_output.rs:9:5
+# 1.73 changed it to look like:
+#   thread 'basic_error1' panicked at tests/test_test_output.rs:9:5:
+#   assertion failed: false
+PANIC_PATTERN = r'(?:, |panicked at )([^,<\n]*\.[A-z]{2}):([0-9]+)'
 
 def create_output_panel(window, base_dir):
     output_view = window.create_output_panel(PANEL_NAME)
@@ -21,8 +30,7 @@ def create_output_panel(window, base_dir):
         s.set('result_file_regex', '^[^:]+: (..[^:]*):([0-9]+): (.*)$')
     else:
         build_pattern = '^[ \\t]*-->[ \\t]*([^<\n]*):([0-9]+):([0-9]+)'
-        test_pattern = ', ([^,<\n]*\\.[A-z]{2}):([0-9]+)'
-        pattern = '(?|%s|%s)' % (build_pattern, test_pattern)
+        pattern = '(?|%s|%s)' % (build_pattern, PANIC_PATTERN)
         s.set('result_file_regex', pattern)
     # Used for resolving relative paths.
     s.set('result_base_dir', base_dir)
@@ -76,8 +84,9 @@ class OutputListener(rust_proc.ProcListener):
             # Re-fetch the data to handle things like \t expansion.
             appended = self.output_view.substr(
                 sublime.Region(region_start, self.output_view.size()))
-            m = re.search(r', ([^,<\n]*\.[A-z]{2}):([0-9]+):([0-9]+)',
-                appended)
+            # This pattern also includes column numbers (which Sublime's
+            # result_file_regex doesn't support).
+            m = re.search(PANIC_PATTERN + r':([0-9]+)', appended)
             if m:
                 path = os.path.join(self.base_path, m.group(1))
                 if not os.path.exists(path):
