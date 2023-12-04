@@ -1277,8 +1277,7 @@ contexts:
           pop: true
         - match: '{{escaped_byte}}'
           scope: constant.character.escape.rust
-        - match: '(\\)$'
-          scope: punctuation.separator.continuation.line.rust
+        - include: line-continuation
         - match: '\\.'
           scope: invalid.illegal.character.escape.rust
 
@@ -1293,6 +1292,10 @@ contexts:
         - match: '"\2'
           scope: punctuation.definition.string.end.rust
           pop: true
+
+  line-continuation:
+    - match: '\\$'
+      scope: punctuation.separator.continuation.line.rust
 
   escaped-char:
     - match: '{{escaped_char}}'
@@ -1338,8 +1341,7 @@ contexts:
           scope: punctuation.definition.string.end.rust
           pop: true
         - include: escaped-char
-        - match: '(\\)$'
-          scope: punctuation.separator.continuation.line.rust
+        - include: line-continuation
 
   raw-string:
     - match: (r)((#*)")
@@ -1366,8 +1368,7 @@ contexts:
           pop: true
         - match: '{{escaped_byte}}'
           scope: constant.character.escape.rust
-        - match: '(\\)$'
-          scope: punctuation.separator.continuation.line.rust
+        - include: line-continuation
         - include: escaped-char
 
   raw-c-string:
@@ -1393,8 +1394,7 @@ contexts:
           pop: true
         - include: escaped-char
         - include: format-escapes
-        - match: '(\\)$'
-          scope: punctuation.separator.continuation.line.rust
+        - include: line-continuation
 
   format-raw-string:
     - match: (r)(#*)"
