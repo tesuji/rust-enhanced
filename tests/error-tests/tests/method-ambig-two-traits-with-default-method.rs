@@ -12,14 +12,16 @@
 
 trait Foo { fn method(&self) {} }
 //          ^^^^^^^^^^^^^^^^^^^NOTE(<1.24.0) candidate #1
-//          ^^^^^^^^^^^^^^^^^^^MSG(<1.24.0) See Primary: ↓:28
-//          ^^^^^^^^^^^^^^^^NOTE(>=1.24.0) candidate #1
-//          ^^^^^^^^^^^^^^^^MSG(>=1.24.0) See Primary: ↓:28
+//          ^^^^^^^^^^^^^^^^^^^MSG(<1.24.0) See Primary: ↓:30
+//          ^^^^^^^^^^^^^^^^NOTE(>=1.24.0,<1.79.0-beta) candidate #1
+//          ^^^^^^^^^^^^^^^^NOTE(>=1.79.0-beta) candidate #2
+//          ^^^^^^^^^^^^^^^^MSG(>=1.24.0) See Primary: ↓:30
 trait Bar { fn method(&self) {} }
 //          ^^^^^^^^^^^^^^^^^^^NOTE(<1.24.0) candidate #2
-//          ^^^^^^^^^^^^^^^^^^^MSG(<1.24.0) See Primary: ↓:28
-//          ^^^^^^^^^^^^^^^^NOTE(>=1.24.0) candidate #2
-//          ^^^^^^^^^^^^^^^^MSG(>=1.24.0) See Primary: ↓:28
+//          ^^^^^^^^^^^^^^^^^^^MSG(<1.24.0) See Primary: ↓:30
+//          ^^^^^^^^^^^^^^^^NOTE(>=1.24.0,<1.79.0-beta) candidate #2
+//          ^^^^^^^^^^^^^^^^NOTE(>=1.79.0-beta) candidate #1
+//          ^^^^^^^^^^^^^^^^MSG(>=1.24.0) See Primary: ↓:30
 
 impl Foo for usize {}
 impl Bar for usize {}
@@ -33,5 +35,5 @@ fn main() {
 //          ^^^^^^HELP(>=1.38.0-beta) disambiguate
 //  ^^^^^^^^^^^^^^^^HELP(>=1.42.0-beta) /Accept Replacement:.*Bar::method/
 //          ^^^^^^MSG See Also: ↑:13
-//          ^^^^^^MSG See Also: ↑:18
+//          ^^^^^^MSG See Also: ↑:19
 }
