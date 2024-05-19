@@ -22,7 +22,7 @@ jobs:
             rust: nightly
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
       - run: bash ci/install-rust.sh ${{ matrix.rust }}
       - uses: SublimeText/UnitTesting/actions/setup@v1
         with:
