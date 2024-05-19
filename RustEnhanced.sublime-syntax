@@ -1483,7 +1483,7 @@ contexts:
           scope: punctuation.accessor.rust
           set: no-type-names
 
-    - match: '(::)(?={{function_identifier}})'
+    - match: '(::)(?={{function_identifier}}\s*\()'
       scope: meta.path.rust
       captures:
         1: punctuation.accessor.rust
