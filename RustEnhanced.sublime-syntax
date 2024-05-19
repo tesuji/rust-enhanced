@@ -184,9 +184,6 @@ contexts:
     - match: '\b{{identifier}}!(?=\s*(\(|\{|\[))'
       scope: support.macro.rust
 
-    - match: '\b{{function_identifier}}*\s*(?=\()'
-      scope: variable.function.rust
-
     - include: support-type
 
     - include: basic-identifiers
@@ -216,6 +213,9 @@ contexts:
     - match: ','
       scope: punctuation.separator.rust
       push: after-operator
+
+    - match: '\b{{function_identifier}}*\s*(?=\()'
+      scope: variable.function.rust
 
     - match: '{{identifier}}'
 
