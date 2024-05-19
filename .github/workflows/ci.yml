@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches-ignore: [master]
+    branches-ignore: [master, mod/fn]
   pull_request:
     branches: ['*']
   schedule:
