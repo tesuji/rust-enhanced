@@ -1482,17 +1482,6 @@ contexts:
         - match: '::'
           scope: punctuation.accessor.rust
           set: no-type-names
-
-    - match: '(::)(?={{function_identifier}}\s*\()'
-      scope: meta.path.rust
-      captures:
-        1: punctuation.accessor.rust
-      push:
-        - match: '{{function_identifier}}'
-          scope: variable.function.rust
-        - match: '(?=\()'
-          pop: true
-
     - match: '(::)(?={{identifier}})'
       scope: meta.path.rust
       captures:
@@ -1511,6 +1500,11 @@ contexts:
       # i32, etc when following ::
       - include: comments
       - include: basic-identifiers
+      - match: '{{function_identifier}}'
+        scope: variable.function.rust
+        push:
+        - match: '(?=\()'
+          pop: true
       - match: '{{identifier}}'
       - match: '(?=<)'
         push: generic-angles
