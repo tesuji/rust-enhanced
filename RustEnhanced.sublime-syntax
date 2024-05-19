@@ -186,6 +186,8 @@ contexts:
 
     - include: support-type
 
+    - include: function-call
+
     - include: basic-identifiers
     - include: numbers
 
@@ -1500,16 +1502,32 @@ contexts:
       # i32, etc when following ::
       - include: comments
       - include: basic-identifiers
-      - match: '{{function_identifier}}'
-        scope: variable.function.rust
-        push:
-        - match: '(?=\()'
-          pop: true
       - match: '{{identifier}}'
       - match: '(?=<)'
         push: generic-angles
       - match: ''
         pop: true
+
+  function-call:
+    - match: '(?={{function_identifier}}\s*(\())'
+      push:
+        - meta_scope: meta.function-call.rust
+        - match: '(?:(::)\s*)?{{identifier}}\s*(::)\s*'
+          captures:
+            1: punctuation.accessor.double-colon.rust
+            2: punctuation.accessor.double-colon.rust
+        - match: '(?:(::)\s*)?({{function_identifier}})'
+          captures:
+            1: punctuation.accessor.rust
+            2: variable.function.rust
+        - match: '\('
+          scope: meta.group.rust punctuation.section.group.begin.rust
+          set:
+            - meta_content_scope: meta.function-call.rust meta.group.rust
+            - match: '\)'
+              scope: meta.function-call.rust meta.group.rust punctuation.section.group.end.rust
+              pop: true
+            - include: statements
 
   symbols:
     - match: '=>'
